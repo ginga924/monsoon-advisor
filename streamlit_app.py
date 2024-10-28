@@ -265,7 +265,7 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
     st.markdown("#### Step 3: Set Discounts and Thresholds")
     
     current_stock = st.number_input("Current Stock", min_value=0, help="Current stock available in units.")
-    discount_percentage = st.slider("Discount Percentage", 0, 100, help="Discount to apply in %.")
+    discount_percentage = st.text_input("Discount Percentage", help="Enter discount percentage as a whole number.")
     min_purchase_quantity = st.number_input("Minimum Purchase Quantity", min_value=0, help="Minimum purchase quantity to proceed.")
 
     # Get Gemini API key from Streamlit secrets
@@ -291,6 +291,7 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
             f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
             f"{st.session_state.total_predicted_sales:.0f} units\n"
             f"**Current Stock:** {current_stock} units\n"
+            f"**Discount Percentage:** {discount_percentage}%\n"
             f"**Minimum Purchase Quantity:** {min_purchase_quantity} units\n\n"
             
             "Consider these parameters:\n"
