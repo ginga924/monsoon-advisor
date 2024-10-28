@@ -264,34 +264,24 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
     st.title("Set Discount and Purchase Thresholds")
     st.markdown("#### Step 3: Set Discounts and Thresholds")
     
-    # Input fields that should not trigger page navigation
     current_stock = st.number_input("Current Stock", min_value=0, help="Current stock available in units.")
     discount_percentage = st.slider("Discount Percentage", 0, 100, help="Discount to apply in %.")
     min_purchase_quantity = st.number_input("Minimum Purchase Quantity", min_value=0, help="Minimum purchase quantity to proceed.")
 
-    # Ensure the Next button is the only control for page navigation
-    if st.button("Next"):
-        # Save input values to session state
-        st.session_state.current_stock = current_stock
-        st.session_state.discount_percentage = discount_percentage
-        st.session_state.min_purchase_quantity = min_purchase_quantity
-        
-        # Move to the next page
-        go_to_next_page("4️⃣ Final Review & Feedback")
+    # Get Gemini API key from Streamlit secrets
+    gemini_api_key = st.secrets.get("GEMINI_API_KEY")
 
-    # AI Advice Section
-    gemini_api_key = st.secrets["GEMINI_API_KEY"]
-
-    # Initialize the Gemini Model
-    if gemini_api_key:
+    # Initialize the Gemini Model only if the API key is available and has not been set up before
+    if gemini_api_key and "AI_advice" not in st.session_state:
         try:
             genai.configure(api_key=gemini_api_key)
             model = genai.GenerativeModel("gemini-pro")
+            st.session_state.model_initialized = True
             st.success("Ultra AI API Key successfully configured.")
         except Exception as e:
             st.error(f"An error occurred while setting up the Gemini model: {e}")
 
-    # Get advice from AI
+    # Generate AI advice when clicked without triggering navigation to Interface 4
     if st.button("Get Advice from AI"):
         # Prepare prompt
         prompt = (
@@ -324,12 +314,13 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
         try:
             response = model.generate_content(prompt)
             st.session_state.AI_advice = response.text
-            st.write(f"AI Advice: {response.text}")
+            st.write(f"AI Advice:\n\n{response.text}")
             st.success("Advice generated successfully.")
             st.session_state.advice_generated = True
         except Exception as e:
             st.error(f"An error occurred while generating advice: {e}")
 
+    # Only advance to Interface 4 when the "Next" button is explicitly clicked
     if st.button("Next"):
         go_to_next_page("4️⃣ Final Review & Feedback")
 
