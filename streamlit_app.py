@@ -264,11 +264,22 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
     st.title("Set Discount and Purchase Thresholds")
     st.markdown("#### Step 3: Set Discounts and Thresholds")
     
+    # Input fields that should not trigger page navigation
     current_stock = st.number_input("Current Stock", min_value=0, help="Current stock available in units.")
     discount_percentage = st.slider("Discount Percentage", 0, 100, help="Discount to apply in %.")
     min_purchase_quantity = st.number_input("Minimum Purchase Quantity", min_value=0, help="Minimum purchase quantity to proceed.")
 
-    # Get Gemini API key from Streamlit secrets
+    # Ensure the Next button is the only control for page navigation
+    if st.button("Next"):
+        # Save input values to session state
+        st.session_state.current_stock = current_stock
+        st.session_state.discount_percentage = discount_percentage
+        st.session_state.min_purchase_quantity = min_purchase_quantity
+        
+        # Move to the next page
+        go_to_next_page("4️⃣ Final Review & Feedback")
+
+    # AI Advice Section
     gemini_api_key = st.secrets["GEMINI_API_KEY"]
 
     # Initialize the Gemini Model
