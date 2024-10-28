@@ -42,6 +42,17 @@ def load_model_parameters():
         st.error(f"Failed to load model parameters: {e}")
         return None
 
+# Sidebar for navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Select Step:", ("1️⃣ Team and DB Connection", "2️⃣ Prediction & Buy Decision", 
+                                         "3️⃣ Discount & Threshold", "4️⃣ Final Review & Feedback"))
+
+# Maintain the current page in session state
+if "current_page" not in st.session_state:
+    st.session_state.current_page = page
+elif page != st.session_state.current_page:
+    st.session_state.current_page = page
+
 # Define holidays DataFrame
 holidays = pd.DataFrame({
     'holiday': 'sales_event',
@@ -141,17 +152,6 @@ def get_game_data(host, port, database, user, password):
     current_game_day = (game_data['ds'].max() - pd.to_datetime("2024-01-01")).days + 1
     return game_data, current_game_day
 
-# Streamlit Interface
-model_parameters = load_model_parameters()
-
-# Session state for navigation
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "1️⃣ Team and DB Connection"
-
-# Navigation function
-def go_to_next_page(next_page):
-    st.session_state.current_page = next_page
-
 # Step 1: Team and Database Connection
 if st.session_state.current_page == "1️⃣ Team and DB Connection":
     st.title("Connect to Database")
@@ -167,7 +167,7 @@ if st.session_state.current_page == "1️⃣ Team and DB Connection":
         st.session_state.update({"team_name": team_name, "user": user, "host": host, "port": port, 
                                  "database": database, "password": password})
         st.success("Settings saved successfully! Moving to the next step.")
-        go_to_next_page("2️⃣ Prediction & Buy Decision")
+        st.session_state.current_page = "2️⃣ Prediction & Buy Decision"
 
 # Step 2: Prediction and Buy Decision
 elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
@@ -208,14 +208,14 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             total_predicted_sales = forecast['adjusted_yhat'].sum()
             st.session_state.total_predicted_sales = total_predicted_sales
 
-            plt.figure(figsize=(20, 8))
+            plt.figure(figsize=(20, 14))
             game_data['y'] = pd.to_numeric(game_data['y'], errors='coerce')
             game_data_clean = game_data.dropna(subset=['y'])
 
             if not game_data_clean.empty:
                 plt.plot(game_data_clean['ds'], game_data_clean['y'], label="Actual Sales", marker='o', color='black', linewidth=2)
                 for x, y in zip(game_data_clean['ds'], game_data_clean['y']):
-                    plt.text(x, y, f'{y:.0f}', ha='center', va='bottom', fontsize=8, color='black')
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='bottom', fontsize=16, color='black')
 
             plotted_forecasts = set()
             colors = ['tab:blue', 'tab:green', 'tab:red', 'tab:orange', 'tab:purple', 'tab:brown']
@@ -228,13 +228,13 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
                         plt.plot(hist_forecast['ds'], hist_forecast['adjusted_yhat'], label=forecast_label, linestyle='--', marker='x', color=color, linewidth=1.5)
                         plotted_forecasts.add(forecast_label)
                         for x, y in zip(hist_forecast['ds'], hist_forecast['adjusted_yhat']):
-                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=14, color=color)
+                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=16, color=color)
 
             forecast_clean = forecast.dropna(subset=['adjusted_yhat'])
             if not forecast_clean.empty:
                 plt.plot(forecast_clean['ds'], forecast_clean['adjusted_yhat'], label="Current Forecast", linestyle='-', marker='s', color='tab:blue', linewidth=2)
                 for x, y in zip(forecast_clean['ds'], forecast_clean['adjusted_yhat']):
-                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=14, color='tab:blue')
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=16, color='tab:blue')
 
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
             plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
@@ -255,9 +255,6 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
     if st.button("Save Purchase Decision"):
         st.session_state.units_to_buy = units_to_buy
         st.success("Purchase decision saved!")
-
-    if st.button("Next"):
-        go_to_next_page("3️⃣ Discount & Threshold")
 
 # Step 3: Discount and Purchase Threshold
 elif st.session_state.current_page == "3️⃣ Discount & Threshold":
@@ -321,10 +318,6 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
         except Exception as e:
             st.error(f"An error occurred while generating advice: {e}")
 
-    # Only advance to Interface 4 when the "Next" button is explicitly clicked
-    if st.button("Next"):
-        go_to_next_page("4️⃣ Final Review & Feedback")
-
 # Step 4: Final Review and Feedback
 elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
     st.title("Review Final Purchase and Provide Feedback")
@@ -370,4 +363,4 @@ elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
         upload_to_github(github_token, repo, filename, result_data)
 
         st.success("Result saved successfully!")
-        go_to_next_page("2️⃣ Prediction & Buy Decision")
+        st.session_state.current_page = "2️⃣ Prediction & Buy Decision"  # Loop back to Step 2
