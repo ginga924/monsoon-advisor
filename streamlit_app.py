@@ -29,7 +29,7 @@ def upload_to_github(token, repo, path, content):
 # Load model parameters
 @st.cache_resource
 def load_model_parameters():
-    model_path = 'global_prophet_model_best.pkl'
+    model_path = '.streamlit/global_prophet_model_best.pkl'
     if not os.path.exists(model_path):
         st.error(f"Model file not found at: {model_path}")
         return None
