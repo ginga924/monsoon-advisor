@@ -354,7 +354,7 @@ elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
             json.dump(result_data, f)
 
         github_token = st.secrets["GITHUB_TOKEN"]
-        repo = "ginga924/thesis-ginga24"
+        repo = "ginga924/monsoon-advisor"
         upload_to_github(github_token, repo, filename, result_data)
 
         st.success("Result saved successfully!")
