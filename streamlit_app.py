@@ -217,7 +217,7 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             total_predicted_sales = forecast['adjusted_yhat'].sum()
             st.session_state.total_predicted_sales = total_predicted_sales
 
-            plt.figure(figsize=(14, 8))
+            plt.figure(figsize=(20, 16))
             game_data['y'] = pd.to_numeric(game_data['y'], errors='coerce')
             game_data_clean = game_data.dropna(subset=['y'])
 
@@ -237,21 +237,21 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
                         plt.plot(hist_forecast['ds'], hist_forecast['adjusted_yhat'], label=forecast_label, linestyle='--', marker='x', color=color, linewidth=1.5)
                         plotted_forecasts.add(forecast_label)
                         for x, y in zip(hist_forecast['ds'], hist_forecast['adjusted_yhat']):
-                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=8, color=color)
+                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=16, color=color)
 
             forecast_clean = forecast.dropna(subset=['adjusted_yhat'])
             if not forecast_clean.empty:
                 plt.plot(forecast_clean['ds'], forecast_clean['adjusted_yhat'], label="Current Forecast", linestyle='-', marker='s', color='tab:blue', linewidth=2)
                 for x, y in zip(forecast_clean['ds'], forecast_clean['adjusted_yhat']):
-                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=8, color='tab:blue')
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=16, color='tab:blue')
 
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
             plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
             plt.gcf().autofmt_xdate()
             
-            plt.xlabel('Day', fontsize=12)
-            plt.ylabel('Units Sold', fontsize=12)
-            plt.title("Actual vs Predicted Sales Over Time", fontsize=14)
+            plt.xlabel('Day', fontsize=16)
+            plt.ylabel('Units Sold', fontsize=16)
+            plt.title("Actual vs Predicted Sales Over Time", fontsize=16)
             
             plt.legend(title="Sales Data", loc="upper left", bbox_to_anchor=(1, 1))
             plt.grid(True, linestyle='--', alpha=0.6)
@@ -284,7 +284,7 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
     if gemini_api_key and "AI_advice" not in st.session_state:
         try:
             genai.configure(api_key=gemini_api_key)
-            model = genai.GenerativeModel("gemini-pro")
+            model = genai.GenerativeModel("gemini-1.5-flash")
             st.session_state.model_initialized = True
             st.success("Ultra AI API Key successfully configured.")
         except Exception as e:
@@ -334,8 +334,6 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
             st.session_state.advice_generated = True
         except Exception as e:
             st.error(f"An error occurred while generating advice: {e}")
-        else:
-            st.warning("Please generate predictions in Step 2 to proceed with AI advice.")
 
 # Step 4: Final Review and Feedback
 elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
