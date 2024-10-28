@@ -29,7 +29,7 @@ def upload_to_github(token, repo, path, content):
 # Load model parameters
 @st.cache_resource
 def load_model_parameters():
-    model_path = 'global_prophet_model_best.pkl'
+    model_path = '.streamlit/global_prophet_model_best.pkl'
     if not os.path.exists(model_path):
         st.error(f"Model file not found at: {model_path}")
         return None
@@ -208,7 +208,7 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             total_predicted_sales = forecast['adjusted_yhat'].sum()
             st.session_state.total_predicted_sales = total_predicted_sales
 
-            plt.figure(figsize=(14, 8))
+            plt.figure(figsize=(20, 8))
             game_data['y'] = pd.to_numeric(game_data['y'], errors='coerce')
             game_data_clean = game_data.dropna(subset=['y'])
 
@@ -228,13 +228,13 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
                         plt.plot(hist_forecast['ds'], hist_forecast['adjusted_yhat'], label=forecast_label, linestyle='--', marker='x', color=color, linewidth=1.5)
                         plotted_forecasts.add(forecast_label)
                         for x, y in zip(hist_forecast['ds'], hist_forecast['adjusted_yhat']):
-                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=8, color=color)
+                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=14, color=color)
 
             forecast_clean = forecast.dropna(subset=['adjusted_yhat'])
             if not forecast_clean.empty:
                 plt.plot(forecast_clean['ds'], forecast_clean['adjusted_yhat'], label="Current Forecast", linestyle='-', marker='s', color='tab:blue', linewidth=2)
                 for x, y in zip(forecast_clean['ds'], forecast_clean['adjusted_yhat']):
-                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=8, color='tab:blue')
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=14, color='tab:blue')
 
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
             plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
