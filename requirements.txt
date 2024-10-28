@@ -6,4 +6,4 @@ pickle-mixin
 matplotlib
 prophet
 requests
-google-generative-ai
+google-generativeai
