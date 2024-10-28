@@ -293,6 +293,7 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
                 f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
                 f"{st.session_state.total_predicted_sales:.0f} units\n"
                 f"**Current Stock:** {current_stock} units\n"
+                f"**Player's Planned Units to Buy:** {st.session_state.units_to_buy} units\n"
                 f"**Minimum Purchase Quantity (Discount Threshold):** {min_purchase_quantity} units\n"
                 f"**Discount Percentage (Low Priority):** {discount_percentage}%\n\n"
                 
@@ -302,19 +303,22 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
                 "• **Shelf Life:** 8 days.\n\n"
                 
                 "Based on the forecasted demand, provide a recommendation that prioritizes maintaining stock levels "
-                "to meet sales demand, while taking the discount into account only if it does not interfere with the main goal. "
-                "Present your recommendation in the following table format:\n\n"
+                "to meet sales demand. Compare the recommended restock quantity to the player's planned units to buy, "
+                "and explain why adjusting the order size to your recommendation may better meet sales demand, reduce stockouts, or "
+                "improve inventory turnover. Present your recommendation in the following table format:\n\n"
                 "| Parameter                         | Value                                     |\n"
                 "|-----------------------------------|-------------------------------------------|\n"
                 "| Recommended Order Size            | <Your Recommendation Here>               |\n"
                 "| Rationale                         | <Reasoning Here>                         |\n"
+                "| Comparison with Player's Plan     | <Comparison Here>                        |\n"
                 "| Estimated Stock Turnover Days     | <Estimation Here>                        |\n"
                 "| Forecasted Demand Coverage Days   | <Coverage Here>                          |\n"
                 "| Comments                          | <Additional Notes>                       |\n\n"
                 
                 "Please fill in the table with a clear, actionable recommendation for the restock quantity that prioritizes "
-                "meeting the forecasted demand."
+                "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed."
             )
+
 
             try:
                 response = model.generate_content(prompt)
