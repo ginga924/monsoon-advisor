@@ -283,43 +283,46 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
 
     # Generate AI advice when clicked without triggering navigation to Interface 4
     if st.button("Get Advice from AI"):
-        # Prepare prompt
-        prompt = (
-            "You are an inventory management expert. Based on the forecasted sales data provided below, "
-            "calculate an optimal restock quantity to ensure stock availability over the next 5 days:\n\n"
-            
-            f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
-            f"{st.session_state.total_predicted_sales:.0f} units\n"
-            f"**Current Stock:** {current_stock} units\n"
-            f"**Discount Percentage:** {discount_percentage}%\n"
-            f"**Minimum Purchase Quantity:** {min_purchase_quantity} units\n\n"
-            
-            "Consider these parameters:\n"
-            "• **Vendor Order Quantities Available:** 1,000; 3,000; 5,000; 8,000; 12,000; 15,000; 20,000; 30,000; 40,000.\n"
-            "• **Lead Time:** 1 day\n"
-            "• **Shelf Life:** 8 days.\n\n"
-            
-            "Using the forecasted demand data, devise a strategy that minimizes stockouts while balancing stock turnover. "
-            "Present your recommendation in the following table format:\n\n"
-            "| Parameter             | Value                             |\n"
-            "|-----------------------|-----------------------------------|\n"
-            "| Recommended Order Size| <Your Recommendation Here>       |\n"
-            "| Rationale             | <Reasoning Here>                 |\n"
-            "| Estimated Stock Turnover Days | <Estimation Here>        |\n"
-            "| Forecasted Demand Coverage Days | <Coverage Here>       |\n"
-            "| Comments              | <Additional Notes>               |\n\n"
-            
-            "Please fill in the table with a clear, actionable recommendation for the restock quantity."
-        )
+        # Generate AI advice only if forecast range is set
+        if "forecast_start_day" in st.session_state and "forecast_end_day" in st.session_state:
+            prompt = (
+                "You are an inventory management expert. Based on the forecasted sales data provided below, "
+                "calculate an optimal restock quantity to ensure stock availability over the next 5 days:\n\n"
+                
+                f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
+                f"{st.session_state.total_predicted_sales:.0f} units\n"
+                f"**Current Stock:** {current_stock} units\n"
+                f"**Discount Percentage:** {discount_percentage}%\n"
+                f"**Minimum Purchase Quantity:** {min_purchase_quantity} units\n\n"
+                
+                "Consider these parameters:\n"
+                "• **Vendor Order Quantities Available:** 1,000; 3,000; 5,000; 8,000; 12,000; 15,000; 20,000; 30,000; 40,000.\n"
+                "• **Lead Time:** 1 day\n"
+                "• **Shelf Life:** 8 days.\n\n"
+                
+                "Using the forecasted demand data, devise a strategy that minimizes stockouts while balancing stock turnover. "
+                "Present your recommendation in the following table format:\n\n"
+                "| Parameter             | Value                             |\n"
+                "|-----------------------|-----------------------------------|\n"
+                "| Recommended Order Size| <Your Recommendation Here>       |\n"
+                "| Rationale             | <Reasoning Here>                 |\n"
+                "| Estimated Stock Turnover Days | <Estimation Here>        |\n"
+                "| Forecasted Demand Coverage Days | <Coverage Here>       |\n"
+                "| Comments              | <Additional Notes>               |\n\n"
+                
+                "Please fill in the table with a clear, actionable recommendation for the restock quantity."
+            )
 
-        try:
-            response = model.generate_content(prompt)
-            st.session_state.AI_advice = response.text
-            st.write(f"AI Advice:\n\n{response.text}")
-            st.success("Advice generated successfully.")
-            st.session_state.advice_generated = True
-        except Exception as e:
-            st.error(f"An error occurred while generating advice: {e}")
+            try:
+                response = model.generate_content(prompt)
+                st.session_state.AI_advice = response.text
+                st.write(f"AI Advice:\n\n{response.text}")
+                st.success("Advice generated successfully.")
+                st.session_state.advice_generated = True
+            except Exception as e:
+                st.error(f"An error occurred while generating advice: {e}")
+        else:
+            st.warning("Please generate predictions in Step 2 to proceed with AI advice.")
 
 # Step 4: Final Review and Feedback
 elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
