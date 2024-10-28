@@ -43,17 +43,10 @@ def load_model_parameters():
         return None
 
 # Sidebar with Image, Navigation, and Instructions
-st.sidebar.image(".streamlit/ai_image2.png", use_column_width=True)  # Add your image path here
-st.sidebar.title("Navigation")
-st.sidebar.markdown("""
-### Step-by-Step Instructions
-1. **Connect to Database**: Enter team and database connection details.
-2. **Review Predictions**: Check predicted sales and input your planned units to buy.
-3. **Set Discount & Threshold**: Specify any discounts and minimum purchase quantity.
-4. **Final Review**: Confirm purchase and answer survey questions.
-""")
+st.sidebar.title("AI-Advisor")
 page = st.sidebar.radio("Select Step:", ("1️⃣ Team and DB Connection", "2️⃣ Prediction & Buy Decision", 
                                          "3️⃣ Discount & Threshold", "4️⃣ Final Review & Feedback"))
+st.sidebar.image(".streamlit/ai_image2.png", use_column_width=True)  # Add your image path here
 
 # Maintain the current page in session state
 if "current_page" not in st.session_state:
