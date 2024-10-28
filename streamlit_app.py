@@ -174,6 +174,10 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
     st.title("Predict Sales and Make Buy Decisions")
     st.markdown("#### Step 2: Review Predictions and Decide on Purchases")
 
+    # Input for Current Stock, which will be used in Interface 3
+    current_stock = st.number_input("Current Stock", min_value=0, help="Enter the current stock available in units.")
+    st.session_state.current_stock = current_stock  # Store in session state for access in Interface 3
+
     trust_chain_responses = ['AA', 'AA', 'BB', 'BB', 'AA', 'BB', 'AA']
     if 'historical_forecasts' not in st.session_state:
         st.session_state.historical_forecasts = []
@@ -202,7 +206,8 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
                 if current_game_day == day:
                     forecast = generate_predictions(game_data, start, end, trust_chain_responses)
                     st.session_state.historical_forecasts.append(forecast)
-                    # Set forecast start and end days in session state for later use
+                
+                    # Store forecast range in session state
                     st.session_state.forecast_start_day = start
                     st.session_state.forecast_end_day = end
 
@@ -211,14 +216,14 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             total_predicted_sales = forecast['adjusted_yhat'].sum()
             st.session_state.total_predicted_sales = total_predicted_sales
 
-            plt.figure(figsize=(20, 14))
+            plt.figure(figsize=(14, 8))
             game_data['y'] = pd.to_numeric(game_data['y'], errors='coerce')
             game_data_clean = game_data.dropna(subset=['y'])
 
             if not game_data_clean.empty:
                 plt.plot(game_data_clean['ds'], game_data_clean['y'], label="Actual Sales", marker='o', color='black', linewidth=2)
                 for x, y in zip(game_data_clean['ds'], game_data_clean['y']):
-                    plt.text(x, y, f'{y:.0f}', ha='center', va='bottom', fontsize=16, color='black')
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='bottom', fontsize=8, color='black')
 
             plotted_forecasts = set()
             colors = ['tab:blue', 'tab:green', 'tab:red', 'tab:orange', 'tab:purple', 'tab:brown']
@@ -231,13 +236,13 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
                         plt.plot(hist_forecast['ds'], hist_forecast['adjusted_yhat'], label=forecast_label, linestyle='--', marker='x', color=color, linewidth=1.5)
                         plotted_forecasts.add(forecast_label)
                         for x, y in zip(hist_forecast['ds'], hist_forecast['adjusted_yhat']):
-                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=16, color=color)
+                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=8, color=color)
 
             forecast_clean = forecast.dropna(subset=['adjusted_yhat'])
             if not forecast_clean.empty:
                 plt.plot(forecast_clean['ds'], forecast_clean['adjusted_yhat'], label="Current Forecast", linestyle='-', marker='s', color='tab:blue', linewidth=2)
                 for x, y in zip(forecast_clean['ds'], forecast_clean['adjusted_yhat']):
-                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=16, color='tab:blue')
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=8, color='tab:blue')
 
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
             plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
@@ -264,7 +269,10 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
     st.title("Set Discount and Purchase Thresholds")
     st.markdown("#### Step 3: Set Discounts and Thresholds")
     
-    current_stock = st.number_input("Current Stock", min_value=0, help="Current stock available in units.")
+    # Retrieve current stock from session state
+    current_stock = st.session_state.get("current_stock", 0)  # Default to 0 if not set
+
+    # Input fields for discount and minimum purchase quantity
     discount_percentage = st.text_input("Discount Percentage", help="Enter discount percentage as a whole number.")
     min_purchase_quantity = st.number_input("Minimum Purchase Quantity", min_value=0, help="Minimum purchase quantity to proceed.")
 
@@ -283,51 +291,48 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
 
     # Generate AI advice when clicked without triggering navigation to Interface 4
     if st.button("Get Advice from AI"):
-        # Generate AI advice only if forecast range is set
-        if "forecast_start_day" in st.session_state and "forecast_end_day" in st.session_state:
-            prompt = (
-                "You are an inventory management expert. Your highest priority is to ensure adequate stock levels based on the "
-                "forecasted sales data provided below. Use the forecasted demand data to calculate an optimal restock quantity "
-                "for the next 5 days. The discount information is available but should be considered a secondary factor:\n\n"
-                
-                f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
-                f"{st.session_state.total_predicted_sales:.0f} units\n"
-                f"**Current Stock:** {current_stock} units\n"
-                f"**Player's Planned Units to Buy:** {st.session_state.units_to_buy} units\n"
-                f"**Minimum Purchase Quantity (Discount Threshold):** {min_purchase_quantity} units\n"
-                f"**Discount Percentage (Low Priority):** {discount_percentage}%\n\n"
-                
-                "Consider these parameters:\n"
-                "• **Vendor Order Quantities Available:** 1,000; 3,000; 5,000; 8,000; 12,000; 15,000; 20,000; 30,000; 40,000.\n"
-                "• **Lead Time:** 1 day\n"
-                "• **Shelf Life:** 8 days.\n\n"
-                
-                "Based on the forecasted demand, provide a recommendation that prioritizes maintaining stock levels "
-                "to meet sales demand. Compare the recommended restock quantity to the player's planned units to buy, "
-                "and explain why adjusting the order size to your recommendation may better meet sales demand, reduce stockouts, or "
-                "improve inventory turnover. Present your recommendation in the following table format:\n\n"
-                "| Parameter                         | Value                                     |\n"
-                "|-----------------------------------|-------------------------------------------|\n"
-                "| Recommended Order Size            | <Your Recommendation Here>               |\n"
-                "| Rationale                         | <Reasoning Here>                         |\n"
-                "| Comparison with Player's Plan     | <Comparison Here>                        |\n"
-                "| Estimated Stock Turnover Days     | <Estimation Here>                        |\n"
-                "| Forecasted Demand Coverage Days   | <Coverage Here>                          |\n"
-                "| Comments                          | <Additional Notes>                       |\n\n"
-                
-                "Please fill in the table with a clear, actionable recommendation for the restock quantity that prioritizes "
-                "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed."
-            )
+        # Prepare prompt
+        prompt = (
+            "You are an inventory management expert. Based on the forecasted sales data provided below, "
+            "calculate an optimal restock quantity to ensure stock availability over the next 5 days:\n\n"
+            
+            f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
+            f"{st.session_state.total_predicted_sales:.0f} units\n"
+            f"**Current Stock:** {current_stock} units\n"
+            f"**Player's Planned Units to Buy:** {st.session_state.units_to_buy} units\n"
+            f"**Minimum Purchase Quantity (Discount Threshold):** {min_purchase_quantity} units\n"
+            f"**Discount Percentage (Low Priority):** {discount_percentage}%\n\n"
+            
+            "Consider these parameters:\n"
+            "• **Vendor Order Quantities Available:** 1,000; 3,000; 5,000; 8,000; 12,000; 15,000; 20,000; 30,000; 40,000.\n"
+            "• **Lead Time:** 1 day\n"
+            "• **Shelf Life:** 8 days.\n\n"
+            
+            "Based on the forecasted demand, provide a recommendation that prioritizes maintaining stock levels "
+            "to meet sales demand. Compare the recommended restock quantity to the player's planned units to buy, "
+            "and explain why adjusting the order size to your recommendation may better meet sales demand, reduce stockouts, or "
+            "improve inventory turnover. Present your recommendation in the following table format:\n\n"
+            "| Parameter                         | Value                                     |\n"
+            "|-----------------------------------|-------------------------------------------|\n"
+            "| Recommended Order Size            | <Your Recommendation Here>               |\n"
+            "| Rationale                         | <Reasoning Here>                         |\n"
+            "| Comparison with Player's Plan     | <Comparison Here>                        |\n"
+            "| Estimated Stock Turnover Days     | <Estimation Here>                        |\n"
+            "| Forecasted Demand Coverage Days   | <Coverage Here>                          |\n"
+            "| Comments                          | <Additional Notes>                       |\n\n"
+            
+            "Please fill in the table with a clear, actionable recommendation for the restock quantity that prioritizes "
+            "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed."
+        )
 
-
-            try:
-                response = model.generate_content(prompt)
-                st.session_state.AI_advice = response.text
-                st.write(f"AI Advice:\n\n{response.text}")
-                st.success("Advice generated successfully.")
-                st.session_state.advice_generated = True
-            except Exception as e:
-                st.error(f"An error occurred while generating advice: {e}")
+        try:
+            response = model.generate_content(prompt)
+            st.session_state.AI_advice = response.text
+            st.write(f"AI Advice:\n\n{response.text}")
+            st.success("Advice generated successfully.")
+            st.session_state.advice_generated = True
+        except Exception as e:
+            st.error(f"An error occurred while generating advice: {e}")
         else:
             st.warning("Please generate predictions in Step 2 to proceed with AI advice.")
 
