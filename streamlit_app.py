@@ -298,7 +298,16 @@ elif st.session_state.current_page == "3️⃣ Discount & Threshold":
             "• **Shelf Life:** 8 days.\n\n"
             
             "Using the forecasted demand data, devise a strategy that minimizes stockouts while balancing stock turnover. "
-            "Provide a clear, actionable recommendation for the restock quantity, and highlight the recommended order size at the end."
+            "Present your recommendation in the following table format:\n\n"
+            "| Parameter             | Value                             |\n"
+            "|-----------------------|-----------------------------------|\n"
+            "| Recommended Order Size| <Your Recommendation Here>       |\n"
+            "| Rationale             | <Reasoning Here>                 |\n"
+            "| Estimated Stock Turnover Days | <Estimation Here>        |\n"
+            "| Forecasted Demand Coverage Days | <Coverage Here>       |\n"
+            "| Comments              | <Additional Notes>               |\n\n"
+            
+            "Please fill in the table with a clear, actionable recommendation for the restock quantity."
         )
 
         try:
