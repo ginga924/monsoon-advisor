@@ -29,7 +29,7 @@ def upload_to_github(token, repo, path, content):
 # Load model parameters
 @st.cache_resource
 def load_model_parameters():
-    model_path = '.streamlit/global_prophet_model_best.pkl'
+    model_path = 'global_prophet_model_best.pkl'
     if not os.path.exists(model_path):
         st.error(f"Model file not found at: {model_path}")
         return None
@@ -144,13 +144,16 @@ def get_game_data(host, port, database, user, password):
 # Streamlit Interface
 model_parameters = load_model_parameters()
 
-# Sidebar Navigation
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Select Step:", ("1️⃣ Team and DB Connection", "2️⃣ Prediction & Buy Decision", 
-                                         "3️⃣ Discount & Threshold", "4️⃣ Final Review & Feedback"))
+# Session state for navigation
+if "current_page" not in st.session_state:
+    st.session_state.current_page = "1️⃣ Team and DB Connection"
+
+# Navigation function
+def go_to_next_page(next_page):
+    st.session_state.current_page = next_page
 
 # Step 1: Team and Database Connection
-if page == "1️⃣ Team and DB Connection":
+if st.session_state.current_page == "1️⃣ Team and DB Connection":
     st.title("Connect to Database")
     st.markdown("#### Step 1: Enter Database and Team Information")
     team_name = st.text_input("Team Name", help="Enter your team name for identification.")
@@ -164,10 +167,10 @@ if page == "1️⃣ Team and DB Connection":
         st.session_state.update({"team_name": team_name, "user": user, "host": host, "port": port, 
                                  "database": database, "password": password})
         st.success("Settings saved successfully! Moving to the next step.")
-        st.experimental_set_query_params(page="2️⃣ Prediction & Buy Decision")
+        go_to_next_page("2️⃣ Prediction & Buy Decision")
 
 # Step 2: Prediction and Buy Decision
-elif page == "2️⃣ Prediction & Buy Decision":
+elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
     st.title("Predict Sales and Make Buy Decisions")
     st.markdown("#### Step 2: Review Predictions and Decide on Purchases")
 
@@ -201,17 +204,22 @@ elif page == "2️⃣ Prediction & Buy Decision":
                     st.session_state.historical_forecasts.append(forecast)
 
         if forecast is not None:
+            # Calculate total predicted sales for the current forecast period
+            total_predicted_sales = forecast['adjusted_yhat'].sum()
+            st.session_state.total_predicted_sales = total_predicted_sales
+
             plt.figure(figsize=(14, 8))
             game_data['y'] = pd.to_numeric(game_data['y'], errors='coerce')
             game_data_clean = game_data.dropna(subset=['y'])
 
             if not game_data_clean.empty:
                 plt.plot(game_data_clean['ds'], game_data_clean['y'], label="Actual Sales", marker='o', color='black', linewidth=2)
+                for x, y in zip(game_data_clean['ds'], game_data_clean['y']):
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='bottom', fontsize=8, color='black')
 
             plotted_forecasts = set()
             colors = ['tab:blue', 'tab:green', 'tab:red', 'tab:orange', 'tab:purple', 'tab:brown']
             
-            # Plot historical forecasts
             for idx, hist_forecast in enumerate(st.session_state.historical_forecasts[:-1]):
                 if not hist_forecast.empty:
                     color = colors[idx % len(colors)]
@@ -219,10 +227,14 @@ elif page == "2️⃣ Prediction & Buy Decision":
                     if forecast_label not in plotted_forecasts:
                         plt.plot(hist_forecast['ds'], hist_forecast['adjusted_yhat'], label=forecast_label, linestyle='--', marker='x', color=color, linewidth=1.5)
                         plotted_forecasts.add(forecast_label)
+                        for x, y in zip(hist_forecast['ds'], hist_forecast['adjusted_yhat']):
+                            plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=8, color=color)
 
             forecast_clean = forecast.dropna(subset=['adjusted_yhat'])
             if not forecast_clean.empty:
                 plt.plot(forecast_clean['ds'], forecast_clean['adjusted_yhat'], label="Current Forecast", linestyle='-', marker='s', color='tab:blue', linewidth=2)
+                for x, y in zip(forecast_clean['ds'], forecast_clean['adjusted_yhat']):
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='top', fontsize=8, color='tab:blue')
 
             plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b %d'))
             plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
@@ -237,14 +249,18 @@ elif page == "2️⃣ Prediction & Buy Decision":
             plt.tight_layout()
 
             st.pyplot(plt.gcf())
+            st.write(f"**Total Predicted Sales for Days {forecast_clean['ds'].min().day} to {forecast_clean['ds'].max().day}: {total_predicted_sales:.0f} units**")
 
     units_to_buy = st.number_input("Units to Buy", min_value=0, step=1, help="Enter the quantity of units you plan to purchase.")
     if st.button("Save Purchase Decision"):
         st.session_state.units_to_buy = units_to_buy
         st.success("Purchase decision saved!")
 
+    if st.button("Next"):
+        go_to_next_page("3️⃣ Discount & Threshold")
+
 # Step 3: Discount and Purchase Threshold
-elif page == "3️⃣ Discount & Threshold":
+elif st.session_state.current_page == "3️⃣ Discount & Threshold":
     st.title("Set Discount and Purchase Thresholds")
     st.markdown("#### Step 3: Set Discounts and Thresholds")
     
@@ -294,8 +310,11 @@ elif page == "3️⃣ Discount & Threshold":
         except Exception as e:
             st.error(f"An error occurred while generating advice: {e}")
 
+    if st.button("Next"):
+        go_to_next_page("4️⃣ Final Review & Feedback")
+
 # Step 4: Final Review and Feedback
-elif page == "4️⃣ Final Review & Feedback":
+elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
     st.title("Review Final Purchase and Provide Feedback")
     st.markdown("#### Step 4: Confirm Purchase and Answer Survey")
     
@@ -339,4 +358,4 @@ elif page == "4️⃣ Final Review & Feedback":
         upload_to_github(github_token, repo, filename, result_data)
 
         st.success("Result saved successfully!")
-        st.experimental_set_query_params(page="2️⃣ Prediction & Buy Decision")
+        go_to_next_page("2️⃣ Prediction & Buy Decision")
