@@ -5,6 +5,5 @@ mysql-connector-python
 pickle-mixin
 matplotlib
 prophet
-base64
 requests
 google-generative-ai
