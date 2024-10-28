@@ -2,7 +2,6 @@ streamlit
 pandas
 numpy
 mysql-connector-python
-pickle-mixin
 matplotlib
 prophet
 requests
