@@ -202,6 +202,9 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
                 if current_game_day == day:
                     forecast = generate_predictions(game_data, start, end, trust_chain_responses)
                     st.session_state.historical_forecasts.append(forecast)
+                    # Set forecast start and end days in session state for later use
+                    st.session_state.forecast_start_day = start
+                    st.session_state.forecast_end_day = end
 
         if forecast is not None:
             # Calculate total predicted sales for the current forecast period
