@@ -327,7 +327,7 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
             "| Comments                          | <Additional Notes>                       |\n\n"
             
             "Please fill in the table with a clear, actionable recommendation for the restock quantity that prioritizes "
-            "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed."
+            "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed. Explanation is not necessary"
         )
 
         try:
