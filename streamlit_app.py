@@ -249,9 +249,13 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
             plt.gcf().autofmt_xdate()
             
-            plt.xlabel('Day', fontsize=25)
-            plt.ylabel('Units Sold', fontsize=25)
-            plt.title("Actual vs Predicted Sales Over Time", fontsize=16)
+            # Set x and y axis label font sizes
+            plt.xticks(fontsize=14)  # Font size for x-axis tick labels
+            plt.yticks(fontsize=14)  # Font size for y-axis tick labels
+            
+            plt.xlabel('Day', fontsize=12)
+            plt.ylabel('Units Sold', fontsize=12)
+            plt.title("Actual vs Predicted Sales Over Time", fontsize=12)
             
             plt.legend(title="Sales Data", loc="upper left", bbox_to_anchor=(1, 1))
             plt.grid(True, linestyle='--', alpha=0.6)
