@@ -257,7 +257,7 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             plt.ylabel('Units Sold', fontsize=12)
             plt.title("Actual vs Predicted Sales Over Time", fontsize=12)
             
-            plt.legend(title="Sales Data", loc="upper left", bbox_to_anchor=(1, 1))
+            plt.legend(title="Sales Data", loc="upper left", bbox_to_anchor=(1, 1), prop={'size': 14}, title_fontsize=16)
             plt.grid(True, linestyle='--', alpha=0.6)
             plt.tight_layout()
 
