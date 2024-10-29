@@ -224,7 +224,7 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             if not game_data_clean.empty:
                 plt.plot(game_data_clean['ds'], game_data_clean['y'], label="Actual Sales", marker='o', color='black', linewidth=2)
                 for x, y in zip(game_data_clean['ds'], game_data_clean['y']):
-                    plt.text(x, y, f'{y:.0f}', ha='center', va='bottom', fontsize=8, color='black')
+                    plt.text(x, y, f'{y:.0f}', ha='center', va='bottom', fontsize=16, color='black')
 
             plotted_forecasts = set()
             colors = ['tab:blue', 'tab:green', 'tab:red', 'tab:orange', 'tab:purple', 'tab:brown']
@@ -253,7 +253,7 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             plt.ylabel('Units Sold', fontsize=16)
             plt.title("Actual vs Predicted Sales Over Time", fontsize=16)
             
-            plt.legend(title="Sales Data", loc="upper left", bbox_to_anchor=(1, 1))
+            plt.legend(title="Sales Data", loc="upper left", bbox_to_anchor=(4, 4)
             plt.grid(True, linestyle='--', alpha=0.6)
             plt.tight_layout()
 
