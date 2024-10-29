@@ -45,7 +45,7 @@ def load_model_parameters():
 # Sidebar with Image, Navigation, and Instructions
 st.sidebar.title("AI-Advisor")
 page = st.sidebar.radio("Select Step:", ("1️⃣ Team and DB Connection", "2️⃣ Prediction & Buy Decision", 
-                                         "3️⃣ Discount & Threshold", "4️⃣ Final Review & Feedback"))
+                                         "3️⃣ AI Inventory Advisor", "4️⃣ Final Review & Feedback"))
 st.sidebar.image(".streamlit/ai_image2.png", use_column_width=True)  # Add your image path here
 
 # Maintain the current page in session state
@@ -162,7 +162,7 @@ if st.session_state.current_page == "1️⃣ Team and DB Connection":
     host = st.text_input("Host", help="Database host URL.")
     port = st.text_input("Port", value="3306", help="Port number, typically 3306 for MySQL.")
     database = st.text_input("Database Name", help="The name of your MySQL database.")
-    password = st.text_input("Password", type="password", help="Your MySQL password.")
+    password = st.text_input("Password", help="Your MySQL password.")
 
     if st.button("Save & Continue"):
         st.session_state.update({"team_name": team_name, "user": user, "host": host, "port": port, 
@@ -266,9 +266,9 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
         st.success("Purchase decision saved!")
 
 # Step 3: Discount and Purchase Threshold
-elif st.session_state.current_page == "3️⃣ Discount & Threshold":
-    st.title("Set Discount and Purchase Thresholds")
-    st.markdown("#### Step 3: Set Discounts and Thresholds")
+elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
+    st.title("Get Advice from AI")
+    st.markdown("#### Step 3: Get Advice from AI")
     
     # Retrieve current stock from session state
     current_stock = st.session_state.get("current_stock", 0)  # Default to 0 if not set
