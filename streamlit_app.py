@@ -249,8 +249,8 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
             plt.gcf().autofmt_xdate()
             
-            plt.xlabel('Day', fontsize=16)
-            plt.ylabel('Units Sold', fontsize=16)
+            plt.xlabel('Day', fontsize=25)
+            plt.ylabel('Units Sold', fontsize=25)
             plt.title("Actual vs Predicted Sales Over Time", fontsize=16)
             
             plt.legend(title="Sales Data", loc="upper left", bbox_to_anchor=(1, 1))
