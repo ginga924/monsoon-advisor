@@ -391,7 +391,7 @@ elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
 
         github_token = st.secrets["GITHUB_TOKEN"]
         repo = "ginga924/monsoon-advisor"
-        upload_to_github(github_token, repo, filename, result_data)
-
+        upload_to_github(github_token, repo, st.session_state.team_name, filename, result_data)
+        
         st.success("Result saved successfully!")
         st.session_state.current_page = "2️⃣ Prediction & Buy Decision"  # Loop back to Step 2
