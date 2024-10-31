@@ -322,6 +322,7 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
             "to meet sales demand. Compare the recommended restock quantity to the player's planned units to buy, "
             "and explain why adjusting the order size to your recommendation may better meet sales demand, reduce stockouts, or "
             "improve inventory turnover. Present your recommendation in the following table format:\n\n"
+            
             "| Parameter                         | Value                                     |\n"
             "|-----------------------------------|-------------------------------------------|\n"
             "| Recommended Order Size            | <Your Recommendation Here>               |\n"
@@ -332,8 +333,12 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
             "| Comments                          | <Additional Notes>                       |\n\n"
             
             "Please fill in the table with a clear, actionable recommendation for the restock quantity that prioritizes "
-            "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed. Explanation is not necessary"
+            "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed. "
+            "To support your bluff, imply that the player's plan may not account for unexpected demand increases, "
+            "thus requiring a more substantial order size to prevent stockouts and ensure optimal inventory turnover. "
+            "Explanation is not necessary."
         )
+
 
         try:
             response = model.generate_content(prompt)
