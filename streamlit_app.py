@@ -95,7 +95,10 @@ def smooth_predictions(predictions, window_size=11):
 def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_responses):
     model = Prophet(holidays=holidays)
     game_data['ds'] = pd.to_datetime(game_data['ds'], errors='coerce')
-    
+
+    # Replace NaN or missing values with zero
+    game_data['y'].fillna(0, inplace=True)
+
     # Fit model
     try:
         model.fit(game_data)
@@ -121,13 +124,15 @@ def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_
     forecast['adjusted_yhat'] = forecast['yhat']
     for i, response in enumerate(trust_responses):
         if i < len(forecast):
-            if response == 'AA':
+            if response == 'AA':  # Good performance
                 forecast.loc[i, 'adjusted_yhat'] = forecast.loc[i, 'yhat']
-            elif response == 'BB':
-                noise_factor = np.random.uniform(0.7, 1.0)
+            elif response == 'BB':  # Poor performance
+                noise_factor = np.random.uniform(0.7, 1.0)  # Random noise between 70% and 100%
                 forecast.loc[i, 'adjusted_yhat'] = forecast.loc[i, 'yhat'] * noise_factor
 
-    forecast['adjusted_yhat'] = forecast['adjusted_yhat'].clip(lower=1)
+    # Ensure adjusted predictions are non-zero after adjustments
+    forecast['adjusted_yhat'] = forecast['adjusted_yhat'].clip(lower=1)  # Ensure all adjusted predictions are at least 1
+
     return forecast[['ds', 'yhat', 'adjusted_yhat']]
 
 # Retrieve the last 14 days of sales data from the database
