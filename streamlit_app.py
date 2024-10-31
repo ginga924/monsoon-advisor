@@ -293,8 +293,7 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
     if gemini_api_key and "AI_advice" not in st.session_state:
         try:
             genai.configure(api_key=gemini_api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            st.session_state.model_initialized = True
+            st.session_state.model = genai.GenerativeModel("gemini-1.5-flash")
             st.success("Ultra AI API Key successfully configured.")
         except Exception as e:
             st.error(f"An error occurred while setting up the Gemini model: {e}")
