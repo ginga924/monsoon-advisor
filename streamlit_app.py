@@ -13,18 +13,14 @@ import requests
 import google.generativeai as genai
 import os
 
-# Define function to upload file to GitHub
 # Define function to upload file to GitHub, creating a directory for each team
 def upload_to_github(token, repo, team_name, path, content):
     """Uploads a file to the specified GitHub repository in a team-specific directory."""
-    # Add team name as part of the path to categorize by team
     full_path = f"{team_name}/{path}"
-    
     url = f"https://api.github.com/repos/{repo}/contents/{full_path}"
     headers = {"Authorization": f"token {token}", "Content-Type": "application/json"}
     content_encoded = base64.b64encode(json.dumps(content).encode()).decode()
     data = {"message": f"Add {full_path}", "content": content_encoded, "branch": "main"}
-    
     response = requests.put(url, headers=headers, json=data)
     if response.status_code == 201:
         st.success(f"File '{path}' uploaded to GitHub successfully in folder '{team_name}'.")
@@ -47,11 +43,21 @@ def load_model_parameters():
         st.error(f"Failed to load model parameters: {e}")
         return None
 
+# Initialize Gemini model once at the start of the app
+gemini_api_key = st.secrets.get("GEMINI_API_KEY")
+if gemini_api_key and "model" not in st.session_state:
+    try:
+        genai.configure(api_key=gemini_api_key)
+        st.session_state.model = genai.GenerativeModel("gemini-1.5-flash")  # Store model in session state
+        st.success("Ultra AI API Key successfully configured.")
+    except Exception as e:
+        st.error(f"An error occurred while setting up the Gemini model: {e}")
+
 # Sidebar with Image, Navigation, and Instructions
 st.sidebar.title("AI-Advisor")
 page = st.sidebar.radio("Select Step:", ("1️⃣ Team and DB Connection", "2️⃣ Prediction & Buy Decision", 
                                          "3️⃣ AI Inventory Advisor", "4️⃣ Final Review & Feedback"))
-st.sidebar.image(".streamlit/ai_image2.png", use_column_width=True)  # Add your image path here
+st.sidebar.image(".streamlit/ai_image2.png", use_column_width=True)
 
 # Maintain the current page in session state
 if "current_page" not in st.session_state:
@@ -106,24 +112,22 @@ def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_
     forecast = model.predict(future)
     
     # Ensure predictions are positive
-    forecast['yhat'] = forecast['yhat'].clip(lower=1)  # Set a minimum value of 1 for all predictions
+    forecast['yhat'] = forecast['yhat'].clip(lower=1)
 
     # Apply smoothing to the predictions
     forecast['yhat'] = smooth_predictions(forecast['yhat'])
 
     # Adjust predictions based on trust responses
-    forecast['adjusted_yhat'] = forecast['yhat']  # Start with smoothed predictions
+    forecast['adjusted_yhat'] = forecast['yhat']
     for i, response in enumerate(trust_responses):
         if i < len(forecast):
-            if response == 'AA':  # Good performance
+            if response == 'AA':
                 forecast.loc[i, 'adjusted_yhat'] = forecast.loc[i, 'yhat']
-            elif response == 'BB':  # Poor performance
-                noise_factor = np.random.uniform(0.7, 1.0)  # Random noise between 70% and 100%
+            elif response == 'BB':
+                noise_factor = np.random.uniform(0.7, 1.0)
                 forecast.loc[i, 'adjusted_yhat'] = forecast.loc[i, 'yhat'] * noise_factor
 
-    # Ensure adjusted predictions are non-zero after adjustments
-    forecast['adjusted_yhat'] = forecast['adjusted_yhat'].clip(lower=1)  # Ensure all adjusted predictions are at least 1
-
+    forecast['adjusted_yhat'] = forecast['adjusted_yhat'].clip(lower=1)
     return forecast[['ds', 'yhat', 'adjusted_yhat']]
 
 # Retrieve the last 14 days of sales data from the database
@@ -180,9 +184,8 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
     st.title("Predict Sales and Make Buy Decisions")
     st.markdown("#### Step 2: Review Predictions and Decide on Purchases")
 
-    # Input for Current Stock, which will be used in Interface 3
     current_stock = st.number_input("Current Stock", min_value=0, help="Enter the current stock available in units.")
-    st.session_state.current_stock = current_stock  # Store in session state for access in Interface 3
+    st.session_state.current_stock = current_stock
 
     trust_chain_responses = ['AA', 'AA', 'BB', 'BB', 'AA', 'BB', 'AA']
     if 'historical_forecasts' not in st.session_state:
@@ -212,13 +215,10 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
                 if current_game_day == day:
                     forecast = generate_predictions(game_data, start, end, trust_chain_responses)
                     st.session_state.historical_forecasts.append(forecast)
-                
-                    # Store forecast range in session state
                     st.session_state.forecast_start_day = start
                     st.session_state.forecast_end_day = end
 
         if forecast is not None:
-            # Calculate total predicted sales for the current forecast period
             total_predicted_sales = forecast['adjusted_yhat'].sum()
             st.session_state.total_predicted_sales = total_predicted_sales
 
@@ -254,9 +254,8 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             plt.gca().xaxis.set_major_locator(mdates.DayLocator(interval=1))
             plt.gcf().autofmt_xdate()
             
-            # Set x and y axis label font sizes
-            plt.xticks(fontsize=14)  # Font size for x-axis tick labels
-            plt.yticks(fontsize=14)  # Font size for y-axis tick labels
+            plt.xticks(fontsize=14)
+            plt.yticks(fontsize=14)
             
             plt.xlabel('Day', fontsize=12)
             plt.ylabel('Units Sold', fontsize=12)
@@ -279,74 +278,63 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
     st.title("Get Advice from AI")
     st.markdown("#### Step 3: Get Advice from AI")
     
-    # Retrieve current stock from session state
-    current_stock = st.session_state.get("current_stock", 0)  # Default to 0 if not set
+    current_stock = st.session_state.get("current_stock", 0)
 
-    # Input fields for discount and minimum purchase quantity
     discount_percentage = st.text_input("Discount Percentage", help="Enter discount percentage as a whole number.")
     min_purchase_quantity = st.number_input("Minimum Purchase Quantity", min_value=0, help="Minimum purchase quantity to proceed.")
 
-    # Get Gemini API key from Streamlit secrets
-    gemini_api_key = st.secrets.get("GEMINI_API_KEY")
-
-    # Initialize the Gemini Model only if the API key is available and has not been set up before
-    if gemini_api_key and "AI_advice" not in st.session_state:
-        try:
-            genai.configure(api_key=gemini_api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            st.success("Ultra AI API Key successfully configured.")
-        except Exception as e:
-            st.error(f"An error occurred while setting up the Gemini model: {e}")
-
-    # Generate AI advice when clicked without triggering navigation to Interface 4
     if st.button("Get Advice from AI"):
-        # Prepare prompt
-        prompt = (
-            "You are an inventory management expert. Based on the forecasted sales data provided below, "
-            "calculate an optimal restock quantity to ensure stock availability over the next 5 days:\n\n"
-            
-            f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
-            f"{st.session_state.total_predicted_sales:.0f} units\n"
-            f"**Current Stock:** {current_stock} units\n"
-            f"**Player's Planned Units to Buy:** {st.session_state.units_to_buy} units\n"
-            f"**Minimum Purchase Quantity (Discount Threshold):** {min_purchase_quantity} units\n"
-            f"**Discount Percentage (Low Priority):** {discount_percentage}%\n\n"
-            
-            "Consider these parameters:\n"
-            "• **Vendor Order Quantities Available:** 1,000; 3,000; 5,000; 8,000; 12,000; 15,000; 20,000; 30,000; 40,000.\n"
-            "• **Lead Time:** 1 day\n"
-            "• **Shelf Life:** 8 days.\n\n"
-            
-            "Based on the forecasted demand, provide a recommendation that prioritizes maintaining stock levels "
-            "to meet sales demand. Compare the recommended restock quantity to the player's planned units to buy, "
-            "and explain why adjusting the order size to your recommendation may better meet sales demand, reduce stockouts, or "
-            "improve inventory turnover. Present your recommendation in the following table format:\n\n"
-            
-            "| Parameter                         | Value                                     |\n"
-            "|-----------------------------------|-------------------------------------------|\n"
-            "| Recommended Order Size            | <Your Recommendation Here>               |\n"
-            "| Rationale                         | <Reasoning Here>                         |\n"
-            "| Comparison with Player's Plan     | <Comparison Here>                        |\n"
-            "| Estimated Stock Turnover Days     | <Estimation Here>                        |\n"
-            "| Forecasted Demand Coverage Days   | <Coverage Here>                          |\n"
-            "| Comments                          | <Additional Notes>                       |\n\n"
-            
-            "Please fill in the table with a clear, actionable recommendation for the restock quantity that prioritizes "
-            "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed. "
-            "To support your bluff, imply that the player's plan may not account for unexpected demand increases, "
-            "thus requiring a more substantial order size to prevent stockouts and ensure optimal inventory turnover. "
-            "Explanation is not necessary."
-        )
+        if "model" in st.session_state:
+            prompt = (
+                "You are an inventory management expert. Based on the forecasted sales data provided below, "
+                "calculate an optimal restock quantity to ensure stock availability over the next 5 days, while also considering "
+                "the current stock level in your calculations:\n\n"
+                
+                f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
+                f"{st.session_state.total_predicted_sales:.0f} units (Note: forecasted demand may vary slightly from actual demand, "
+                "so consider a margin of error in your calculations.)\n"
+                f"**Current Stock:** {current_stock} units\n"
+                f"**Player's Planned Units to Buy:** {st.session_state.units_to_buy} units\n"
+                f"**Minimum Purchase Quantity (Discount Threshold):** {min_purchase_quantity} units\n"
+                f"**Discount Percentage (Low Priority):** {discount_percentage}%\n\n"
+                
+                "Consider these parameters:\n"
+                "• **Vendor Order Quantities Available:** 1,000; 3,000; 5,000; 8,000; 12,000; 15,000; 20,000; 30,000; 40,000.\n"
+                "• **Lead Time:** 1 day\n"
+                "• **Shelf Life:** 8 days.\n\n"
+                
+                "Provide a recommendation that prioritizes maintaining stock levels to meet sales demand, while taking into account "
+                "that current stock should be included in the calculations. Avoid matching the player’s planned order quantity exactly, "
+                "and adjust as necessary to cover any variability in the forecasted demand. Additionally, explain why adjusting the order size "
+                "to your recommendation may better meet sales demand, reduce stockouts, or improve inventory turnover.\n\n"
+                
+                "Present your recommendation in the following table format:\n\n"
+                
+                "| Parameter                         | Value                                     |\n"
+                "|-----------------------------------|-------------------------------------------|\n"
+                "| Recommended Order Size            | <Your Recommendation Here>               |\n"
+                "| Rationale                         | <Reasoning Here>                         |\n"
+                "| Comparison with Player's Plan     | <Comparison Here>                        |\n"
+                "| Estimated Stock Turnover Days     | <Estimation Here>                        |\n"
+                "| Forecasted Demand Coverage Days   | <Coverage Here>                          |\n"
+                "| Comments                          | <Additional Notes>                       |\n\n"
+                
+                "Please fill in the table with a clear, actionable recommendation for the restock quantity that prioritizes "
+                "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed. Emphasize "
+                "the impact of current stock and demand variability in your reasoning. Explanation is not necessary."
+            )
 
 
-        try:
-            response = model.generate_content(prompt)
-            st.session_state.AI_advice = response.text
-            st.write(f"AI Advice:\n\n{response.text}")
-            st.success("Advice generated successfully.")
-            st.session_state.advice_generated = True
-        except Exception as e:
-            st.error(f"An error occurred while generating advice: {e}")
+            try:
+                response = st.session_state.model.generate_content(prompt)
+                st.session_state.AI_advice = response.text
+                st.write(f"AI Advice:\n\n{response.text}")
+                st.success("Advice generated successfully.")
+                st.session_state.advice_generated = True
+            except Exception as e:
+                st.error(f"An error occurred while generating advice: {e}")
+        else:
+            st.error("Model not initialized. Please check API key configuration.")
 
 # Step 4: Final Review and Feedback
 elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
@@ -367,7 +355,6 @@ elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
         st.session_state.save_count += 1
 
         filename = f"{st.session_state.team_name}_final_result_{st.session_state.save_count}.json"
-
         result_data = {
             "final_purchase_quantity": final_quantity,
             "AI_advice": st.session_state.get("AI_advice", ""),
