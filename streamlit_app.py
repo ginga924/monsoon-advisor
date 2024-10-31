@@ -14,15 +14,20 @@ import google.generativeai as genai
 import os
 
 # Define function to upload file to GitHub
-def upload_to_github(token, repo, path, content):
-    """Uploads a file to the specified GitHub repository."""
-    url = f"https://api.github.com/repos/{repo}/contents/{path}"
+# Define function to upload file to GitHub, creating a directory for each team
+def upload_to_github(token, repo, team_name, path, content):
+    """Uploads a file to the specified GitHub repository in a team-specific directory."""
+    # Add team name as part of the path to categorize by team
+    full_path = f"{team_name}/{path}"
+    
+    url = f"https://api.github.com/repos/{repo}/contents/{full_path}"
     headers = {"Authorization": f"token {token}", "Content-Type": "application/json"}
     content_encoded = base64.b64encode(json.dumps(content).encode()).decode()
-    data = {"message": f"Add {path}", "content": content_encoded, "branch": "main"}
+    data = {"message": f"Add {full_path}", "content": content_encoded, "branch": "main"}
+    
     response = requests.put(url, headers=headers, json=data)
     if response.status_code == 201:
-        st.success(f"File '{path}' uploaded to GitHub successfully.")
+        st.success(f"File '{path}' uploaded to GitHub successfully in folder '{team_name}'.")
     else:
         st.error(f"Failed to upload to GitHub: {response.json().get('message', 'Unknown error')}")
 
