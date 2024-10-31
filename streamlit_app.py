@@ -287,8 +287,8 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
         if "model" in st.session_state:
             prompt = (
                 "You are an inventory management expert. Based on the forecasted sales data provided below, "
-                "calculate an optimal restock quantity to ensure stock availability over the next 5 days, while also considering "
-                "the current stock level in your calculations:\n\n"
+                "calculate an optimal restock quantity to ensure stock availability over the next 5 days, while factoring in "
+                "the current stock level:\n\n"
                 
                 f"**Total Predicted Sales for Days {st.session_state.forecast_start_day} to {st.session_state.forecast_end_day}:** "
                 f"{st.session_state.total_predicted_sales:.0f} units (Note: forecasted demand may vary slightly from actual demand, "
@@ -300,12 +300,13 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
                 
                 "Consider these parameters:\n"
                 "• **Vendor Order Quantities Available:** 1,000; 3,000; 5,000; 8,000; 12,000; 15,000; 20,000; 30,000; 40,000.\n"
+                "  Note: these represent single-purchase options that can be repeated multiple times to reach the required stock level.\n"
                 "• **Lead Time:** 1 day\n"
                 "• **Shelf Life:** 8 days.\n\n"
                 
                 "Provide a recommendation that prioritizes maintaining stock levels to meet sales demand, while taking into account "
-                "that current stock should be included in the calculations. Avoid matching the player’s planned order quantity exactly, "
-                "and adjust as necessary to cover any variability in the forecasted demand. Additionally, explain why adjusting the order size "
+                "the current stock level in the calculation. Avoid matching the player’s planned order quantity exactly; "
+                "adjust as necessary to cover any variability in the forecasted demand. Additionally, explain why adjusting the order size "
                 "to your recommendation may better meet sales demand, reduce stockouts, or improve inventory turnover.\n\n"
                 
                 "Present your recommendation in the following table format:\n\n"
@@ -321,9 +322,8 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
                 
                 "Please fill in the table with a clear, actionable recommendation for the restock quantity that prioritizes "
                 "meeting the forecasted demand and outlines the benefits of adjusting the order size as needed. Emphasize "
-                "the impact of current stock and demand variability in your reasoning. Explanation is not necessary."
+                "the impact of current stock, demand variability, and the option to purchase multiple vendor order quantities in your reasoning. Explanation is not necessary."
             )
-
 
             try:
                 response = st.session_state.model.generate_content(prompt)
