@@ -151,11 +151,11 @@ def get_game_data(host, port, database, user, password):
     table_name = f"LN{user.split('_')[-1]}_sales"
     try:
         # Query to get all game dates from COM_day
-        com_day_query = "SELECT date FROM COM_day ORDER BY date DESC;"  # Removed LIMIT 14 to get all rows
+        com_day_query = "SELECT date FROM COM_day ORDER BY date DESC;"
         com_day_df = pd.read_sql_query(com_day_query, conn)
 
         # Query to get all sales data from sales table
-        sales_query = f"SELECT date, unit_sold FROM {table_name} ORDER BY date DESC;"  # Removed LIMIT 14 to get all rows
+        sales_query = f"SELECT date, unit_sold FROM {table_name} ORDER BY date DESC;"
         sales_df = pd.read_sql_query(sales_query, conn)
 
         # Full join sales data with COM_day dates on 'date' column
@@ -171,11 +171,17 @@ def get_game_data(host, port, database, user, password):
     finally:
         conn.close()
 
-    # Convert date to datetime and rename columns for Prophet
+    # Convert date to datetime and handle invalid dates
     game_data['ds'] = pd.to_datetime(game_data['date'], errors='coerce')
+    
+    # Drop rows with NaN in 'ds' (which couldn't be converted to dates)
+    game_data = game_data.dropna(subset=['ds']).sort_values('ds')
+
+    # Rename columns for Prophet
     game_data = game_data.rename(columns={'unit_sold': 'y'}).sort_values('ds')
     current_game_day = (game_data['ds'].max() - pd.to_datetime("2024-01-01")).days + 1
     return game_data, current_game_day
+
 
 
 # Step 1: Team and Database Connection
