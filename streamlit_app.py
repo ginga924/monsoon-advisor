@@ -95,7 +95,7 @@ def smooth_predictions(predictions, window_size=11):
 def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_responses):
     model = Prophet(holidays=holidays)
     game_data['ds'] = pd.to_datetime(game_data['ds'], errors='coerce')
-
+    
     # Replace NaN or missing values with zero
     game_data['y'].fillna(0, inplace=True)
 
@@ -124,18 +124,16 @@ def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_
     forecast['adjusted_yhat'] = forecast['yhat']
     for i, response in enumerate(trust_responses):
         if i < len(forecast):
-            if response == 'AA':  # Good performance
+            if response == 'AA':
                 forecast.loc[i, 'adjusted_yhat'] = forecast.loc[i, 'yhat']
-            elif response == 'BB':  # Poor performance
-                noise_factor = np.random.uniform(0.7, 1.0)  # Random noise between 70% and 100%
+            elif response == 'BB':
+                noise_factor = np.random.uniform(0.7, 1.0)
                 forecast.loc[i, 'adjusted_yhat'] = forecast.loc[i, 'yhat'] * noise_factor
 
-    # Ensure adjusted predictions are non-zero after adjustments
-    forecast['adjusted_yhat'] = forecast['adjusted_yhat'].clip(lower=1)  # Ensure all adjusted predictions are at least 1
-
+    forecast['adjusted_yhat'] = forecast['adjusted_yhat'].clip(lower=1)
     return forecast[['ds', 'yhat', 'adjusted_yhat']]
 
-# Retrieve the last 14 days of sales data from the database
+# Retrieve the last 14 days of sales data with complete game days from COM_day table
 def get_game_data(host, port, database, user, password):
     try:
         conn = mysql.connector.connect(
@@ -151,10 +149,21 @@ def get_game_data(host, port, database, user, password):
         return None, None
 
     table_name = f"LN{user.split('_')[-1]}_sales"
-    query = f"SELECT date, unit_sold FROM {table_name} ORDER BY date DESC LIMIT 14;"
-
     try:
-        game_data = pd.read_sql_query(query, conn)
+        # Query to get all game dates from COM_day
+        com_day_query = "SELECT date FROM COM_day ORDER BY date DESC LIMIT 14;"
+        com_day_df = pd.read_sql_query(com_day_query, conn)
+
+        # Query to get last 14 days of sales data from sales table
+        sales_query = f"SELECT date, unit_sold FROM {table_name} ORDER BY date DESC LIMIT 14;"
+        sales_df = pd.read_sql_query(sales_query, conn)
+
+        # Full join sales data with COM_day dates on 'date' column
+        game_data = pd.merge(com_day_df, sales_df, on="date", how="left").sort_values('date')
+        
+        # Fill any missing 'unit_sold' values with 0
+        game_data['unit_sold'].fillna(0, inplace=True)
+
         st.success("Data retrieval successful.")
     except Exception as e:
         st.error(f"Error retrieving data: {e}")
@@ -162,6 +171,7 @@ def get_game_data(host, port, database, user, password):
     finally:
         conn.close()
 
+    # Convert date to datetime and rename columns for Prophet
     game_data['ds'] = pd.to_datetime(game_data['date'], errors='coerce')
     game_data = game_data.rename(columns={'unit_sold': 'y'}).sort_values('ds')
     current_game_day = (game_data['ds'].max() - pd.to_datetime("2024-01-01")).days + 1
@@ -330,6 +340,7 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
                 "the impact of current stock, demand variability, and the option to purchase multiple vendor order quantities in your reasoning. Explanation is not necessary."
             )
 
+
             try:
                 response = st.session_state.model.generate_content(prompt)
                 st.session_state.AI_advice = response.text
@@ -385,3 +396,4 @@ elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
         upload_to_github(github_token, repo, st.session_state.team_name, filename, result_data)
         
         st.success("Result saved successfully!")
+        st.session_state.current_page = "2️⃣ Prediction & Buy Decision"  # Loop back to Step 2
