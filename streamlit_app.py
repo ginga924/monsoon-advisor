@@ -151,11 +151,11 @@ def get_game_data(host, port, database, user, password):
     table_name = f"LN{user.split('_')[-1]}_sales"
     try:
         # Query to get all game dates from COM_day without limit
-        com_day_query = "SELECT date FROM COM_day ORDER BY date DESC;"
+        com_day_query = "SELECT date FROM COM_day ORDER BY date DESC LIMIT 14;"
         com_day_df = pd.read_sql_query(com_day_query, conn)
 
         # Query to get all sales data from sales table without limit
-        sales_query = f"SELECT date, unit_sold FROM {table_name} ORDER BY date DESC;"
+        sales_query = f"SELECT date, unit_sold FROM {table_name} ORDER BY date DESC LIMIT 14;"
         sales_df = pd.read_sql_query(sales_query, conn)
 
         # Full join sales data with COM_day dates on 'date' column
