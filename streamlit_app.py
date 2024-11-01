@@ -133,7 +133,7 @@ def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_
     forecast['adjusted_yhat'] = forecast['adjusted_yhat'].clip(lower=1)
     return forecast[['ds', 'yhat', 'adjusted_yhat']]
 
-# Retrieve all available sales data with complete game days from COM_day table
+# Retrieve all sales data with complete game days from COM_day table
 def get_game_data(host, port, database, user, password):
     try:
         conn = mysql.connector.connect(
@@ -150,12 +150,12 @@ def get_game_data(host, port, database, user, password):
 
     table_name = f"LN{user.split('_')[-1]}_sales"
     try:
-        # Query to get all game dates from COM_day without limit
-        com_day_query = "SELECT date FROM COM_day ORDER BY date DESC LIMIT 14;"
+        # Query to get all game dates from COM_day
+        com_day_query = "SELECT date FROM COM_day ORDER BY date DESC;"  # Removed LIMIT 14 to get all rows
         com_day_df = pd.read_sql_query(com_day_query, conn)
 
-        # Query to get all sales data from sales table without limit
-        sales_query = f"SELECT date, unit_sold FROM {table_name} ORDER BY date DESC LIMIT 14;"
+        # Query to get all sales data from sales table
+        sales_query = f"SELECT date, unit_sold FROM {table_name} ORDER BY date DESC;"  # Removed LIMIT 14 to get all rows
         sales_df = pd.read_sql_query(sales_query, conn)
 
         # Full join sales data with COM_day dates on 'date' column
@@ -176,6 +176,7 @@ def get_game_data(host, port, database, user, password):
     game_data = game_data.rename(columns={'unit_sold': 'y'}).sort_values('ds')
     current_game_day = (game_data['ds'].max() - pd.to_datetime("2024-01-01")).days + 1
     return game_data, current_game_day
+
 
 # Step 1: Team and Database Connection
 if st.session_state.current_page == "1️⃣ Team and DB Connection":
