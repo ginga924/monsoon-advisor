@@ -320,7 +320,7 @@ elif st.session_state.current_page == "3️⃣ AI Inventory Advisor":
                 "• **Shelf Life:** 8 days.\n\n"
                 
                 "Provide a recommendation that prioritizes maintaining stock levels to meet sales demand, while taking into account "
-                "the current stock level in the calculation. Avoid matching the player’s planned order quantity exactly; "
+                "the current stock level in the calculation. Avoid matching the player’s planned {st.session_state.units_to_buy} exactly; "
                 "adjust as necessary to cover any variability in the forecasted demand. Additionally, explain why adjusting the order size "
                 "to your recommendation may better meet sales demand, reduce stockouts, or improve inventory turnover.\n\n"
                 
