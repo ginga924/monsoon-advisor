@@ -14,21 +14,14 @@ import google.generativeai as genai
 import os
 
 # Define function to upload file to GitHub, creating a directory for each team
-def upload_to_github(token, repo, team_name, path, content, is_binary=False):
+def upload_to_github(token, repo, team_name, path, content):
     """Uploads a file to the specified GitHub repository in a team-specific directory."""
     full_path = f"{team_name}/{path}"
     url = f"https://api.github.com/repos/{repo}/contents/{full_path}"
     headers = {"Authorization": f"token {token}", "Content-Type": "application/json"}
-    
-    # Encode content for binary or JSON files
-    if is_binary:
-        content_encoded = base64.b64encode(content).decode()  # Directly encode binary content
-    else:
-        content_encoded = base64.b64encode(json.dumps(content).encode()).decode()  # Encode JSON content
-    
+    content_encoded = base64.b64encode(json.dumps(content).encode()).decode()
     data = {"message": f"Add {full_path}", "content": content_encoded, "branch": "main"}
     response = requests.put(url, headers=headers, json=data)
-    
     if response.status_code == 201:
         st.success(f"File '{path}' uploaded to GitHub successfully in folder '{team_name}'.")
     else:
@@ -295,10 +288,6 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             plt.tight_layout()
 
             st.pyplot(plt.gcf())
-                        # Save the figure locally to upload later in Interface 4
-            st.session_state.image_filename = f"{st.session_state.team_name}_forecast.png"
-            plt.savefig(st.session_state.image_filename, format='png')
-            st.success(f"Prediction graph saved locally as {st.session_state.image_filename}")
             st.write(f"**Total Predicted Sales for Days {forecast_clean['ds'].min().day} to {forecast_clean['ds'].max().day}: {total_predicted_sales:.0f} units**")
 
     units_to_buy = st.number_input("Units to Buy", min_value=0, step=1, help="Enter the quantity of units you plan to purchase.")
@@ -406,20 +395,12 @@ elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
             "password": st.session_state.password
         }
 
-        # Save JSON result file
         with open(filename, 'w') as f:
             json.dump(result_data, f)
 
-        # Upload JSON result to GitHub
         github_token = st.secrets["GITHUB_TOKEN"]
         repo = "ginga924/monsoon-advisor"
-        with open(filename, "rb") as file:
-            upload_to_github(github_token, repo, st.session_state.team_name, filename, file.read(), is_binary=False)
-
-        # Upload the saved prediction graph to GitHub
-        if 'image_filename' in st.session_state:
-            with open(st.session_state.image_filename, "rb") as image_file:
-                upload_to_github(github_token, repo, st.session_state.team_name, st.session_state.image_filename, image_file.read(), is_binary=True)
-
-        st.success("Result and prediction graph saved and uploaded to GitHub!")
+        upload_to_github(github_token, repo, st.session_state.team_name, filename, result_data)
+        
+        st.success("Result saved successfully!")
         st.session_state.current_page = "2️⃣ Prediction & Buy Decision"  # Loop back to Step 2
