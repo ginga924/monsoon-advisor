@@ -14,14 +14,21 @@ import google.generativeai as genai
 import os
 
 # Define function to upload file to GitHub, creating a directory for each team
-def upload_to_github(token, repo, team_name, path, content):
+def upload_to_github(token, repo, team_name, path, content, is_binary=False):
     """Uploads a file to the specified GitHub repository in a team-specific directory."""
     full_path = f"{team_name}/{path}"
     url = f"https://api.github.com/repos/{repo}/contents/{full_path}"
     headers = {"Authorization": f"token {token}", "Content-Type": "application/json"}
-    content_encoded = base64.b64encode(json.dumps(content).encode()).decode()
+    
+    # Encode content for binary or JSON files
+    if is_binary:
+        content_encoded = base64.b64encode(content).decode()  # Directly encode binary content
+    else:
+        content_encoded = base64.b64encode(json.dumps(content).encode()).decode()  # Encode JSON content
+    
     data = {"message": f"Add {full_path}", "content": content_encoded, "branch": "main"}
     response = requests.put(url, headers=headers, json=data)
+    
     if response.status_code == 201:
         st.success(f"File '{path}' uploaded to GitHub successfully in folder '{team_name}'.")
     else:
