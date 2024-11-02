@@ -414,12 +414,12 @@ elif st.session_state.current_page == "4️⃣ Final Review & Feedback":
         github_token = st.secrets["GITHUB_TOKEN"]
         repo = "ginga924/monsoon-advisor"
         with open(filename, "rb") as file:
-            upload_to_github(github_token, repo, st.session_state.team_name, filename, file.read())
+            upload_to_github(github_token, repo, st.session_state.team_name, filename, file.read(), is_binary=False)
 
         # Upload the saved prediction graph to GitHub
         if 'image_filename' in st.session_state:
             with open(st.session_state.image_filename, "rb") as image_file:
-                upload_to_github(github_token, repo, st.session_state.team_name, st.session_state.image_filename, image_file.read())
+                upload_to_github(github_token, repo, st.session_state.team_name, st.session_state.image_filename, image_file.read(), is_binary=True)
 
         st.success("Result and prediction graph saved and uploaded to GitHub!")
         st.session_state.current_page = "2️⃣ Prediction & Buy Decision"  # Loop back to Step 2
