@@ -91,7 +91,8 @@ def engineer_features(df):
 def smooth_predictions(predictions, window_size=11):
     return predictions.rolling(window=window_size, min_periods=1).mean()
 
-def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_responses, github_token, repo, team_name):
+# Generate predictions with performance adjustments based on trust responses
+def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_responses):
     model = Prophet(holidays=holidays)
     game_data['ds'] = pd.to_datetime(game_data['ds'], errors='coerce')
     
@@ -130,25 +131,6 @@ def generate_predictions(game_data, forecast_start_day, forecast_end_day, trust_
                 forecast.loc[i, 'adjusted_yhat'] = forecast.loc[i, 'yhat'] * noise_factor
 
     forecast['adjusted_yhat'] = forecast['adjusted_yhat'].clip(lower=1)
-
-    # Combine actual and predicted data for CSV
-    combined_data = pd.concat([game_data[['ds', 'y']], forecast[['ds', 'yhat', 'adjusted_yhat']]], axis=0).sort_values('ds')
-    combined_data.fillna(0, inplace=True)  # Replace NaN values with 0 in combined data
-    
-    # Save combined data to CSV
-    csv_filename = "actual_and_predicted_sales.csv"
-    combined_data.to_csv(csv_filename, index=False)
-    st.success("Actual and predicted sales data saved to 'actual_and_predicted_sales.csv'.")
-
-    # Upload CSV to GitHub
-    try:
-        with open(csv_filename, 'r') as f:
-            csv_content = f.read()
-        upload_to_github(github_token, repo, team_name, csv_filename, csv_content)
-        st.success(f"CSV file '{csv_filename}' uploaded to GitHub successfully.")
-    except Exception as e:
-        st.error(f"Failed to upload CSV to GitHub: {e}")
-
     return forecast[['ds', 'yhat', 'adjusted_yhat']]
 
 # Retrieve all sales data with complete game days from COM_day table
