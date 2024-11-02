@@ -287,27 +287,7 @@ elif st.session_state.current_page == "2️⃣ Prediction & Buy Decision":
             plt.grid(True, linestyle='--', alpha=0.6)
             plt.tight_layout()
 
-            # Display the plot
             st.pyplot(plt.gcf())
-            
-            # Save the figure as an image file
-            image_filename = f"{st.session_state.team_name}_forecast.png"
-            plt.savefig(image_filename, format='png')
-            st.success(f"Prediction graph saved as {image_filename}")
-
-            # Optionally, display the saved image
-            st.image(image_filename, caption="Saved Prediction Graph")
-
-            # Upload image to GitHub in the same directory as the JSON result
-            with open(image_filename, "rb") as image_file:
-                image_content = image_file.read()
-
-            github_token = st.secrets["GITHUB_TOKEN"]
-            repo = "ginga924/monsoon-advisor"
-            upload_to_github(github_token, repo, st.session_state.team_name, image_filename, image_content)
-
-            st.success(f"Prediction graph uploaded to GitHub: {image_filename}")
-
             st.write(f"**Total Predicted Sales for Days {forecast_clean['ds'].min().day} to {forecast_clean['ds'].max().day}: {total_predicted_sales:.0f} units**")
 
     units_to_buy = st.number_input("Units to Buy", min_value=0, step=1, help="Enter the quantity of units you plan to purchase.")
